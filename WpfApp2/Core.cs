@@ -8,6 +8,6 @@ namespace WpfApp2
 {
     public static class Core
     {
-        public static pr15GutEntities1 DB = new pr15GutEntities1();
+        public static pr15GutEntities1 DB = new pr15GutEntities1(); 
     }
 }
