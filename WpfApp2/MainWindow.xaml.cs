@@ -15,14 +15,22 @@ using System.Windows.Shapes;
 
 namespace WpfApp2
 {
-    /// <summary>
-    /// Логика взаимодействия для MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         public MainWindow()
         {
             InitializeComponent();
+            MainFrame.Navigate(new BuilderPage());
+        }
+
+        private void Build_Click(object sender, RoutedEventArgs e)
+        {
+            MainFrame.Navigate(new BuilderPage());
+        }
+
+        private void Assemblies_Click(object sender, RoutedEventArgs e)
+        {
+            MainFrame.Navigate(new AssembliesPage());
         }
     }
 }

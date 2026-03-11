@@ -1,0 +1,26 @@
+﻿<Page x:Class="WpfApp2.AssembliesPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Сохраненные сборки">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="2*"/>
+        </Grid.ColumnDefinitions>
+
+        <DataGrid x:Name="AssembliesGrid" AutoGenerateColumns="False" IsReadOnly="True" Margin="10" SelectionChanged="AssembliesGrid_SelectionChanged">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Название" Binding="{Binding name}" Width="*"/>
+                <DataGridTextColumn Header="Автор" Binding="{Binding author}" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <DataGrid x:Name="AssemblyPartsGrid" Grid.Column="1" AutoGenerateColumns="False" IsReadOnly="True" Margin="10">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Тип" Binding="{Binding parttype.name}" Width="1*"/>
+                <DataGridTextColumn Header="Название детали" Binding="{Binding name}" Width="3*"/>
+                <DataGridTextColumn Header="Цена" Binding="{Binding price}" Width="1*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</Page>
