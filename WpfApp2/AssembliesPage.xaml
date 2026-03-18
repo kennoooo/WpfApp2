@@ -17,6 +17,13 @@
 
         <DataGrid x:Name="AssemblyPartsGrid" Grid.Column="1" AutoGenerateColumns="False" IsReadOnly="True" Margin="10">
             <DataGrid.Columns>
+                <DataGridTemplateColumn Header="Фото" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Image Source="{Binding image}" Width="80" Height="80" Stretch="Uniform"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTextColumn Header="Тип" Binding="{Binding parttype_.name}" Width="1*"/>
                 <DataGridTextColumn Header="Название детали" Binding="{Binding name}" Width="3*"/>
                 <DataGridTextColumn Header="Цена" Binding="{Binding price}" Width="1*"/>
