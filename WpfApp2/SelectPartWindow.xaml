@@ -17,8 +17,19 @@
         </Grid>
         <DataGrid x:Name="PartsGrid" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" MouseDoubleClick="PartsGrid_MouseDoubleClick">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Производитель" Binding="{Binding manufacturer.name}" Width="1*"/>
+                <DataGridTemplateColumn Header="Фото" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Image Source="{Binding image}" 
+                           Width="80" 
+                           Height="80" 
+                           Stretch="Uniform"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Производитель" Binding="{Binding manufacturer_.name}" Width="1*"/>
                 <DataGridTextColumn Header="Название" Binding="{Binding name}" Width="3*"/>
+                <DataGridTextColumn Header="Описание" Binding="{Binding parttype_.name, StringFormat='{}Тип Комплектующей: {0}'}" Width="3*"/>
                 <DataGridTextColumn Header="Цена" Binding="{Binding price}" Width="1*"/>
             </DataGrid.Columns>
         </DataGrid>

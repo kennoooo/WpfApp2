@@ -17,7 +17,7 @@
 
         <DataGrid x:Name="AssemblyPartsGrid" Grid.Column="1" AutoGenerateColumns="False" IsReadOnly="True" Margin="10">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Тип" Binding="{Binding parttype.name}" Width="1*"/>
+                <DataGridTextColumn Header="Тип" Binding="{Binding parttype_.name}" Width="1*"/>
                 <DataGridTextColumn Header="Название детали" Binding="{Binding name}" Width="3*"/>
                 <DataGridTextColumn Header="Цена" Binding="{Binding price}" Width="1*"/>
             </DataGrid.Columns>

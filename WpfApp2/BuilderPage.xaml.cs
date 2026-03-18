@@ -101,5 +101,6 @@ namespace WpfApp2
             BuildNameTb.Clear();
             AuthorTb.Clear();
         }
+
     }
 }
