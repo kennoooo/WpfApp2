@@ -29,7 +29,7 @@
                 </DataGridTemplateColumn>
                 <DataGridTextColumn Header="Производитель" Binding="{Binding manufacturer_.name}" Width="1*"/>
                 <DataGridTextColumn Header="Название" Binding="{Binding name}" Width="3*"/>
-                <DataGridTextColumn Header="Описание" Binding="{Binding parttype_.name, StringFormat='{}Тип Комплектующей: {0}'}" Width="3*"/>
+                <DataGridTextColumn Header="Описание" Binding="{Binding Description}" Width="3*"/>
                 <DataGridTextColumn Header="Цена" Binding="{Binding price}" Width="1*"/>
             </DataGrid.Columns>
         </DataGrid>

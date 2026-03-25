@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,6 +16,55 @@ using System.Windows.Shapes;
 
 namespace WpfApp2
 {
+
+    public class PartListItem
+    {
+        public int id { get; set; }
+        public string image { get; set; }
+        public string name { get; set; }
+        public decimal price { get; set; }
+        public int manufacturerid { get; set; }
+        public int parttypeid { get; set; }
+
+        public manufacturer_ manufacturer_ { get; set; }
+
+        public string Description { get; set; }
+
+        public static PartListItem FromBasePart(basepart_ part, int typeId, SqlConnection connection)
+        {
+            var item = new PartListItem
+            {
+                id = part.id,
+                image = part.image,
+                name = part.name,
+                price = part.price,
+                manufacturerid = part.manufacturerid,
+                parttypeid = part.parttypeid,
+                manufacturer_ = part.manufacturer_ 
+            };
+
+            string sql = PartDescription.GetSql(typeId) + " WHERE b.id = @id";
+
+            using (var cmd = new SqlCommand(sql, connection))
+            {
+                cmd.Parameters.AddWithValue("@id", part.id);
+
+                if (connection.State != System.Data.ConnectionState.Open)
+                    connection.Open();
+
+                using (var reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        var desc = PartDescription.Create(typeId, reader);
+                        item.Description = desc.Text;
+                    }
+                }
+            }
+
+            return item;
+        }
+    }
     public partial class SelectPartWindow : Window
     {
         private int _typeId;
@@ -41,18 +92,31 @@ namespace WpfApp2
 
         private void UpdateList()
         {
-            var query = Core.DB.basepart_.Where(p => p.parttypeid == _typeId).ToList();
+            var sqlConnection = Core.DB.Database.Connection as SqlConnection;
+            if (sqlConnection == null) return;
+
+            var query = Core.DB.basepart_
+                .Where(p => p.parttypeid == _typeId)
+                .Include(p => p.manufacturer_) 
+                .AsEnumerable(); 
 
             if (!string.IsNullOrWhiteSpace(SearchTb.Text))
-                query = query.Where(p => p.name.ToLower().Contains(SearchTb.Text.ToLower())).ToList();
+            {
+                var searchText = SearchTb.Text.ToLower();
+                query = query.Where(p => p.name.ToLower().Contains(searchText));
+            }
 
             if (ManufacturerCb.SelectedIndex > 0)
             {
                 var selectedMan = ManufacturerCb.SelectedItem as manufacturer_;
-                query = query.Where(p => p.manufacturerid == selectedMan.id).ToList();
+                query = query.Where(p => p.manufacturerid == selectedMan.id);
             }
 
-            PartsGrid.ItemsSource = query;
+            var partsWithDesc = query
+                .Select(p => PartListItem.FromBasePart(p, _typeId, sqlConnection))
+                .ToList();
+
+            PartsGrid.ItemsSource = partsWithDesc;
         }
 
         private void PartsGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -67,15 +131,18 @@ namespace WpfApp2
             }
         }
 
+
+
         private bool CheckCompatibility(basepart_ part)
         {
             var cpuItem = _currentItems.FirstOrDefault(i => i.TypeId == 1)?.Part;
-            var moboItem = _currentItems.FirstOrDefault(i => i.TypeId == 4)?.Part;
-            var ramItem = _currentItems.FirstOrDefault(i => i.TypeId == 3)?.Part;
-            var coolerItem = _currentItems.FirstOrDefault(i => i.TypeId == 7)?.Part;
-            var caseItem = _currentItems.FirstOrDefault(i => i.TypeId == 5)?.Part;
             var gpuItem = _currentItems.FirstOrDefault(i => i.TypeId == 2)?.Part;
+            var ramItem = _currentItems.FirstOrDefault(i => i.TypeId == 3)?.Part;
+            var moboItem = _currentItems.FirstOrDefault(i => i.TypeId == 4)?.Part;
+            var caseItem = _currentItems.FirstOrDefault(i => i.TypeId == 5)?.Part;
             var psuItem = _currentItems.FirstOrDefault(i => i.TypeId == 6)?.Part;
+            var coolerItem = _currentItems.FirstOrDefault(i => i.TypeId == 7)?.Part;
+
 
             if (_typeId == 1)
             {
@@ -90,6 +157,22 @@ namespace WpfApp2
                     if (!Core.DB.socketprocessorcooler_.Any(s => s.socketid == cpuInfo.socketid && s.processorcoolerid == coolerItem.id)) { MessageBox.Show("Несовместимый сокет с кулером."); return false; }
                 }
             }
+
+            if (_typeId == 2 && psuItem != null)
+            {
+                var gpuInfo = Core.DB.gpu_.FirstOrDefault(g => g.id == part.id);
+                var psuInfo = Core.DB.powersupply_.FirstOrDefault(p => p.id == psuItem.id);
+                if (gpuInfo.recommendpower != null && psuInfo.power < gpuInfo.recommendpower) { MessageBox.Show("Мощность блока питания недостаточна для видеокарты."); return false; }
+            }
+
+
+            if (_typeId == 3 && moboItem != null)
+            {
+                var ramInfo = Core.DB.ram_.FirstOrDefault(r => r.id == part.id);
+                var moboInfo = Core.DB.motherboard_.FirstOrDefault(m => m.id == moboItem.id);
+                if (moboInfo.memorytypeid != ramInfo.memorytypeid) { MessageBox.Show("Несовместимый тип памяти с материнской платой."); return false; }
+            }
+
 
             if (_typeId == 4)
             {
@@ -110,30 +193,10 @@ namespace WpfApp2
                 }
             }
 
-            if (_typeId == 3 && moboItem != null)
-            {
-                var ramInfo = Core.DB.ram_.FirstOrDefault(r => r.id == part.id);
-                var moboInfo = Core.DB.motherboard_.FirstOrDefault(m => m.id == moboItem.id);
-                if (moboInfo.memorytypeid != ramInfo.memorytypeid) { MessageBox.Show("Несовместимый тип памяти с материнской платой."); return false; }
-            }
-
             if (_typeId == 5 && moboItem != null)
             {
                 var moboInfo = Core.DB.motherboard_.FirstOrDefault(m => m.id == moboItem.id);
                 if (!Core.DB.boardformfactorcase_.Any(b => b.caseid == part.id && b.formfactorid == moboInfo.formfactorid)) { MessageBox.Show("Корпус не поддерживает форм-фактор выбранной платы."); return false; }
-            }
-
-            if (_typeId == 7 && cpuItem != null)
-            {
-                var cpuInfo = Core.DB.cpu_.FirstOrDefault(c => c.id == cpuItem.id);
-                if (!Core.DB.socketprocessorcooler_.Any(s => s.socketid == cpuInfo.socketid && s.processorcoolerid == part.id)) { MessageBox.Show("Кулер не подходит под сокет процессора."); return false; }
-            }
-
-            if (_typeId == 2 && psuItem != null)
-            {
-                var gpuInfo = Core.DB.gpu_.FirstOrDefault(g => g.id == part.id);
-                var psuInfo = Core.DB.powersupply_.FirstOrDefault(p => p.id == psuItem.id);
-                if (gpuInfo.recommendpower != null && psuInfo.power < gpuInfo.recommendpower) { MessageBox.Show("Мощность блока питания недостаточна для видеокарты."); return false; }
             }
 
             if (_typeId == 6 && gpuItem != null)
@@ -141,6 +204,12 @@ namespace WpfApp2
                 var psuInfo = Core.DB.powersupply_.FirstOrDefault(p => p.id == part.id);
                 var gpuInfo = Core.DB.gpu_.FirstOrDefault(g => g.id == gpuItem.id);
                 if (gpuInfo.recommendpower != null && psuInfo.power < gpuInfo.recommendpower) { MessageBox.Show("Мощность блока питания недостаточна для выбранной видеокарты."); return false; }
+            }
+
+            if (_typeId == 7 && cpuItem != null)
+            {
+                var cpuInfo = Core.DB.cpu_.FirstOrDefault(c => c.id == cpuItem.id);
+                if (!Core.DB.socketprocessorcooler_.Any(s => s.socketid == cpuInfo.socketid && s.processorcoolerid == part.id)) { MessageBox.Show("Кулер не подходит под сокет процессора."); return false; }
             }
 
             return true;
